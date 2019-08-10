@@ -2,7 +2,6 @@ package co.petproject.billable.csvservice.impl;
 
 import co.petproject.billable.csvservice.api.InvoiceSourceReader;
 import co.petproject.billable.csvservice.models.CsvItem;
-import javafx.animation.ScaleTransition;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -15,12 +14,8 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Component
 @Slf4j

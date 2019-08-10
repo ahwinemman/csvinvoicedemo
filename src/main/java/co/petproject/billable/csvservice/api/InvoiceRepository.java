@@ -1,8 +1,6 @@
 package co.petproject.billable.csvservice.api;
 
 import co.petproject.billable.csvservice.models.CompanyInvoice;
-import co.petproject.billable.csvservice.models.InvoiceLineItem;
-import co.petproject.billable.csvservice.models.ParseResult;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;

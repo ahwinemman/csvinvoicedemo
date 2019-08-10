@@ -17,7 +17,8 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class InvoiceServiceTest {
 
