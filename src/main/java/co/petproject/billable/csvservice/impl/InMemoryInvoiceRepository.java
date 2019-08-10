@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class InMemoryInvoiceRepository implements InvoiceRepository {
 
-    final Map<String, CompanyInvoice> STORE = new ConcurrentHashMap<>();
+    private final Map<String, CompanyInvoice> STORE = new ConcurrentHashMap<>();
 
 
     private String getKey(String resultId, String name) {
