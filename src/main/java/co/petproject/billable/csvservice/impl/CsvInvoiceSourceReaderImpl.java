@@ -45,29 +45,20 @@ public class CsvInvoiceSourceReaderImpl implements InvoiceSourceReader {
 
     @Override
     public List<CsvItem> readRecords(InputStream inputStream) throws IOException {
-        CSVFormat format = CSVFormat.DEFAULT.withHeader(
-                "Employee  ID",
-                "Billable Rate",
-                "Project",
-                "Date",
-                "Start Time",
-                "End Time"
-        );
-
-        CSVParser parser = CSVParser.parse(inputStream, StandardCharsets.UTF_8, CSVFormat.DEFAULT);
-        log.debug("{}  record(s) found", parser.getRecords());
-        Iterator<CSVRecord> recordIterator = parser.iterator();
+        CSVFormat format = CSVFormat.DEFAULT
+                .withFirstRecordAsHeader()
+                .withIgnoreEmptyLines();
+        CSVParser parser = CSVParser.parse(inputStream, StandardCharsets.UTF_8, format);
+        List<CSVRecord> records = parser.getRecords();
+        log.debug("{}  record(s) found", records.size());
         List<CsvItem> items = new ArrayList<>((int) parser.getRecordNumber());
-        while (recordIterator.hasNext()) {
-            CSVRecord line = recordIterator.next();
-            items.add(getItemFromLine(line, (int) parser.getCurrentLineNumber()));
-        }
-
+        records.forEach((line) -> items.add(getItemFromLine(line)));
         return items;
     }
 
 
-    CsvItem getItemFromLine(CSVRecord csvRecord, int lineNumber) {
+    CsvItem getItemFromLine(CSVRecord csvRecord) {
+        int lineNumber = (int) csvRecord.getRecordNumber();
         if (csvRecord.size() < COLUMN_COUNT) {
             throw new InvalidLineFormatException(lineNumber, "Column count is less than expected");
         }
@@ -77,7 +68,9 @@ public class CsvInvoiceSourceReaderImpl implements InvoiceSourceReader {
         try {
             item.setEmployeeId(csvRecord.get(COLUMN_IDX_EMPLOYEE_ID));
             item.setCompany(csvRecord.get(COLUMN_IDX_PROJECT));
-            item.setRatePerHour(BigDecimal.valueOf(Double.parseDouble(csvRecord.get(COLUMN_IDX_RATE))));
+            BigDecimal rate = BigDecimal.valueOf(Double.parseDouble(csvRecord.get(COLUMN_IDX_RATE)))
+                    .setScale(2, BigDecimal.ROUND_HALF_EVEN);
+            item.setRatePerHour(rate);
             item.setDate(DATE_FORMAT.parse(csvRecord.get(COLUMN_IDX_DATE)));
 
             String startTime = csvRecord.get(COLUMN_IDX_START_TIME);
@@ -93,9 +86,8 @@ public class CsvInvoiceSourceReaderImpl implements InvoiceSourceReader {
             if (billableHours < 1) {
                 throw new InvalidLineFormatException(lineNumber, "Invalid billable hours found");
             }
-            
-            item.setHoursWorked(billableHours);
 
+            item.setHoursWorked(billableHours);
         } catch (NumberFormatException nfe) {
             throw new InvalidLineFormatException(lineNumber, "Could not parse numeric value: " + nfe.getMessage());
         } catch (ParseException pe) {
