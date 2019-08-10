@@ -21,6 +21,7 @@ import java.util.Collections;
 @RestController
 @RequestMapping("/invoice")
 @Slf4j
+@CrossOrigin
 public class InvoiceController {
 
 
@@ -33,7 +34,7 @@ public class InvoiceController {
         try (InputStream is = new ByteArrayInputStream(request.getPayload())) {
             return new ResponseEntity<>(invoiceService.parseCsv(is), HttpStatus.OK);
         } catch (InvalidLineFormatException lfe) {
-            return new ResponseEntity<>(Collections.singletonMap("error", String.format("%s - %d", lfe.getMessage(), lfe.getLineNumber())), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(Collections.singletonMap("error", String.format("%s - Line: %d", lfe.getMessage(), lfe.getLineNumber())), HttpStatus.BAD_REQUEST);
         } catch (IOException ioe) {
             log.error("Could not parse CSV input", ioe);
             return new ResponseEntity<>(Collections.singletonMap("error", "Could not parse input"), HttpStatus.INTERNAL_SERVER_ERROR);

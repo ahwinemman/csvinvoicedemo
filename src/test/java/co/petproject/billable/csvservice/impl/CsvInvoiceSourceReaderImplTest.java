@@ -26,7 +26,7 @@ public class CsvInvoiceSourceReaderImplTest {
 
     @Test
     public void readRecords() throws IOException {
-        InputStream csvInput = getClass().getClassLoader().getResourceAsStream("test.csv");
+        InputStream csvInput = getClass().getClassLoader().getResourceAsStream("static/test.csv");
         assertNotNull(csvInput);
         List<CsvItem> items = instance.readRecords(csvInput);
         assertEquals(2, items.size());
