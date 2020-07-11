@@ -39,7 +39,7 @@ java -jar target/csvservice.jar
 
 By default, application runs on port  8080, you can override this by setting `SERVER_PORT` environment variable.         
 
-Visit http://localhost:8080
+Visit [http://localhost:8080]()
 
 ##  Docker
 
@@ -48,5 +48,7 @@ If you do not have Java pre-installed, you can build and run application using D
 ```shell script
 docker build . -t 'csvservice-app'
 #run with
-docker run -P csvservice-app 
+docker run -p 8080:8080 csvservice-app 
 ```
+
+This will automatically start the application on [http://localhost:8080]()

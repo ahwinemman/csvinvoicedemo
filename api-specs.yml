@@ -1,0 +1,200 @@
+swagger: '2.0'
+info:
+  description: CSV Demo API shows specification for the CSV parser for generating employee hours.
+  version: '1.0'
+  title: Api Documentation
+  termsOfService: None
+  contact:
+    name: Bundle Devs
+    email: info@bundle.africa
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0
+basePath: "/"
+tags:
+  - name: invoice-controller
+    description: Invoice Related Endpoints
+
+paths:
+  "/invoice/parse":
+    post:
+      tags:
+        - invoice-controller
+      summary: Parse CSV file content.
+      description: |
+        This endpoint allows you to parse the content of the CSV file encoded in Base64. The CSV file must conform to the specified format.
+
+        You can get base64 encoding of a file on the terminal:
+        ```bash
+        base64 /path/to/file
+        ```
+
+        You can also generate base64 of a file from the web using a service like https://www.browserling.com/tools/file-to-base64
+
+      operationId: parseCsvFile
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: request
+          description: request
+          required: true
+          schema:
+            "$ref": "#/definitions/ParseRequest"
+      responses:
+        '200':
+          description: Successful parsing result.
+          schema:
+            $ref: '#/definitions/ParseResult'
+        '400':
+          description: Invalid Data
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+        '500':
+          description: Input parser exception
+          schema:
+            $ref: '#/definitions/ErrorMessage'
+      deprecated: false
+
+  "/invoice/{invoiceId}":
+    get:
+      tags:
+        - invoice-controller
+      summary: Get Invoice Parsing Result by ID
+      description: |
+        Get the Parse Result for a previously parsed CSV invoice by specified ID. In general, this endpoint will ALWAYS return success irrespective of the ID specified.
+        When a result with the specified ID is not found, the companies will be an empty map.
+      operationId: getInvoiceById
+      produces:
+        - "application/json"
+      parameters:
+        - name: invoiceId
+          in: path
+          description: invoiceId
+          required: true
+          type: string
+      responses:
+        '200':
+          description: OK
+          schema:
+            "$ref": "#/definitions/ParseResult"
+      deprecated: false
+
+  "/invoice/{invoiceId}/company":
+    get:
+      tags:
+        - invoice-controller
+      summary: Get Company details from an Invoice
+      description: |
+        Get the breakdown of the employees, rates and amounts billed by a company in an Invoice result using the ID.
+        This endpoint allows you to "drill-down" into the total amount charged by a company for a given invoice parsed.
+      operationId: getCompanyInvoiceFromResult
+      produces:
+        - "*/*"
+      parameters:
+        - name: companyName
+          in: query
+          description: companyName
+          required: true
+          type: string
+        - name: invoiceId
+          in: path
+          description: invoiceId
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Company Invoice
+          schema:
+            "$ref": "#/definitions/CompanyInvoice"
+        '404':
+          description: Company or Invoice not found
+          schema:
+            "$ref": "#/definitions/ErrorMessage"
+        '400':
+          description: Company name not specified
+          schema:
+            "$ref": "#/definitions/ErrorMessage"
+
+      deprecated: false
+
+definitions:
+  CompanyInvoice:
+    type: object
+    description: The details of the invoice for a specific company
+    properties:
+      lineItems:
+        type: array
+        description: A collection of the total amount per employee.
+        items:
+          "$ref": "#/definitions/InvoiceLineItem"
+      name:
+        type: string
+        example: Google
+        description: Name of the company
+      totalAmount:
+        type: number
+        example: 2400
+        description: The total amount due for the company.
+    title: CompanyInvoice
+
+  InvoiceLineItem:
+    type: object
+    description: Description of amount due for an employee
+    properties:
+      employeeId:
+        type: string
+        description: ID of employee as specified in CSV file
+      hoursWorked:
+        type: integer
+        format: int32
+        description: Total hours worked by exmployee as specified in CSV file
+      ratePerHour:
+        type: number
+        description: Rate due for this employee per hour.
+    title: InvoiceLineItem
+    example:
+      employeeId: '1'
+      ratePerHour: 300
+      hoursWorked: 8
+
+  ParseRequest:
+    description: The request object sent to parse the CSV file
+    type: object
+    properties:
+      payload:
+        type: string
+        description: |
+          The content of the CSV file encoded in Base64.
+        format: binary
+        example: 'RW1wbG95ZWUgSUQsQmlsbGFibGUgUmF0ZSAocGVyIGhvdXIpLFByb2plY3QsRGF0ZSxTdGFydCBUaW1lLEVuZCBUaW1lCjEsMzAwLEdvb2dsZSwyMDE5LTA3LTAxLDA5OjAwLDE3OjAwCjIsMTAwLEZhY2Vib29rLDIwMTktMDctMDEsMTE6MDAsMTY6MDA='
+    title: ParseRequest
+
+  ParseResult:
+    type: object
+    description: Result generated from parsing the CSV file. The ID can be used to retrieve the result.
+    properties:
+      companies:
+        type: object
+        description: This is a summary of total invoice amount per company. It maps the company name to the amount due.
+        additionalProperties:
+          type: number
+        example:
+          Google: 2400
+          Facebook: 500
+      id:
+        type: string
+        format: uuid
+        description: ID of the generated invoice
+    title: ParseResult
+
+  ErrorMessage:
+    type: object
+    title: ErrorMessage
+    description: Error data with message
+    properties:
+      error:
+        type: string
+        example: Something went wrong

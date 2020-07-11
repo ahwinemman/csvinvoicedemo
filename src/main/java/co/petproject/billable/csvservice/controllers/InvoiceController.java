@@ -6,11 +6,20 @@ import co.petproject.billable.csvservice.impl.InvoiceService;
 import co.petproject.billable.csvservice.models.CompanyInvoice;
 import co.petproject.billable.csvservice.models.ParseRequest;
 import co.petproject.billable.csvservice.models.ParseResult;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.io.ByteArrayInputStream;
@@ -30,7 +39,7 @@ public class InvoiceController {
 
     //upload CSV
     @PostMapping("/parse")
-    public ResponseEntity<Object> parseFile(@RequestBody @Valid ParseRequest request) {
+    public ResponseEntity<Object> parseCsvFile(@RequestBody @Valid ParseRequest request) {
         try (InputStream is = new ByteArrayInputStream(request.getPayload())) {
             return new ResponseEntity<>(invoiceService.parseCsv(is), HttpStatus.OK);
         } catch (InvalidLineFormatException lfe) {
@@ -43,18 +52,25 @@ public class InvoiceController {
 
 
     //get parse
-    @GetMapping("/{resultId}")
-    public ParseResult fetchResult(@PathVariable("resultId") String resultId) {
+    @GetMapping("/{invoiceId}")
+    public ParseResult getInvoiceById(@PathVariable("invoiceId") String resultId) {
         return invoiceService.getParseResult(resultId);
     }
 
-    @GetMapping("/{resultId}/company")
-    public ResponseEntity<Object> getCompanyResult(@PathVariable("resultId") String resultId, @RequestParam("companyName") String companyName) {
+    @GetMapping("/{invoiceId}/company")
+    @ApiResponses({
+        @ApiResponse(response = CompanyInvoice.class, code = 200, message = "Company Invoice"),
+        @ApiResponse(code = 404, message = "Company or Invoice not found"),
+    })
+    public ResponseEntity<Object> getCompanyInvoiceFromResult(@PathVariable("invoiceId") String resultId, @RequestParam("companyName") String companyName) {
         CompanyInvoice invoice = invoiceService.getInvoiceItems(resultId, companyName);
         if (invoice != null) {
             return new ResponseEntity<>(invoice, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(
+                Collections.singletonMap("error", "The specified company invoice was not found"),
+                HttpStatus.NOT_FOUND
+            );
         }
     }
 
